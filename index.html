@@ -291,7 +291,15 @@ function desenhar() {
 
     ctx.restore();
   }
-
+if (moldura.complete && moldura.naturalWidth) {
+  ctx.drawImage(
+    moldura,
+    0,
+    0,
+    canvas.width,
+    canvas.height
+  );
+}
 }
 
 input.addEventListener("change", function(event) {
