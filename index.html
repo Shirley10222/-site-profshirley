@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Professora Shirley | 10.222</title>
+
+<style>
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: linear-gradient(180deg, #f3fff7, #ffffff);
+  color: #173524;
+}
+
+.container {
+  max-width: 720px;
+  margin: auto;
+  padding: 25px 15px 40px;
+}
+
+header {
+  text-align: center;
+  margin-bottom: 25px;
+}
+
+.numero {
+  display: inline-block;
+  background: #f5d900;
+  padding: 8px 18px;
+  border-radius: 30px;
+  font-size: 20px;
+  font-weight: bold;
+}
+
+h1 {
+  color: #08783f;
+  font-size: 38px;
+  line-height: 1.05;
+  margin: 18px 0 12px;
+}
+
+header p {
+  font-size: 17px;
+}
+
+.card {
+  background: white;
+  padding: 18px;
+  border-radius: 25px;
+  box-shadow: 0 10px 30px rgba(0,0,0,.12);
+}
+
+.upload {
+  min-height: 190px;
+  border: 2px dashed #6da987;
+  border-radius: 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  cursor: pointer;
+  padding: 20px;
+}
+
+.upload strong {
+  color: #08783f;
+  font-size: 21px;
+  margin-top: 10px;
+}
+
+.upload span {
+  color: #65756b;
+  font-size: 14px;
+  margin-top: 8px;
+}
+
+input[type="file"] {
+  display: none;
+}
+
+#editor {
+  display: none;
+}
+
+canvas {
+  width: 100%;
+  border-radius: 20px;
+  display: block;
+  background: #ddd;
+  touch-action: none;
+}
+
+.instruction {
+  text-align: center;
+  color: #65756b;
+  font-size: 14px;
+}
+
+.zoom {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 15px 0;
+}
+
+.zoom button {
+  width: 45px;
+  height: 45px;
+  border: 0;
+  border-radius: 50%;
+  background: #edf5ef;
+  color: #08783f;
+  font-size: 25px;
+  font-weight: bold;
+}
+
+#zoom {
+  width: 100%;
+}
+
+.buttons {
+  display: flex;
+  gap: 10px;
+}
+
+.buttons button {
+  flex: 1;
+  border: 0;
+  border-radius: 14px;
+  padding: 15px;
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.trocar {
+  background: #edf5ef;
+  color: #08783f;
+}
+
+.salvar {
+  background: #08783f;
+  color: white;
+}
+
+footer {
+  text-align: center;
+  margin-top: 25px;
+  color: #68766e;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+@media(max-width:500px) {
+  h1 {
+    font-size: 30px;
+  }
+
+  .buttons {
+    flex-direction: column;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<header>
+  <div class="numero">10.222</div>
+
+  <h1>
+    Mostre seu apoio à<br>
+    Professora Shirley
+  </h1>
+
+  <p>
+    Escolha sua foto, ajuste e compartilhe!
+  </p>
+</header>
+
+<div class="card">
+
+<label class="upload" for="foto">
+  <div style="font-size:45px;">📷</div>
+  <strong>Escolher minha foto</strong>
+  <span>Toque aqui para selecionar uma foto</span>
+</label>
+
+<input type="file" id="foto" accept="image/*">
+
+<div id="editor">
+
+  <canvas id="canvas" width="1080" height="1080"></canvas>
+
+  <p class="instruction">
+    Arraste a foto para posicionar
+  </p>
+
+  <div class="zoom">
+
+    <button id="menos">−</button>
+
+    <input
+      type="range"
+      id="zoom"
+      min="0.2"
+      max="3"
+      step="0.01"
+      value="1"
+    >
+
+    <button id="mais">+</button>
+
+  </div>
+
+  <div class="buttons">
+
+    <button class="trocar" id="trocar">
+      Trocar foto
+    </button>
+
+    <button class="salvar" id="salvar">
+      Salvar imagem
+    </button>
+
+  </div>
+
+</div>
+
+</div>
+
+<footer>
+  Por um Pará que cuida e transforma
+  <br>
+  Professora Shirley • 10.222
+</footer>
+
+</div>
+
+<script>
+
+const input = document.getElementById("foto");
+const editor = document.getElementById("editor");
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
+
+const zoom = document.getElementById("zoom");
+const mais = document.getElementById("mais");
+const menos = document.getElementById("menos");
+
+const trocar = document.getElementById("trocar");
+const salvar = document.getElementById("salvar");
+
+let imagem = new Image();
+
+let x = 540;
+let y = 540;
+let escala = 1;
+
+let arrastando = false;
+let ultimoX = 0;
+let ultimoY = 0;
+
+function desenhar() {
+
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  ctx.fillStyle = "#eeeeee";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  if (imagem.src) {
+
+    ctx.save();
+
+    ctx.translate(x, y);
+    ctx.scale(escala, escala);
+
+    ctx.drawImage(
+      imagem,
+      -imagem.width / 2,
+      -imagem.height / 2
+    );
+
+    ctx.restore();
+  }
+
+}
+
+input.addEventListener("change", function(event) {
+
+  const arquivo = event.target.files[0];
+
+  if (!arquivo) return;
+
+  const url = URL.createObjectURL(arquivo);
+
+  imagem.onload = function() {
+
+    editor.style.display = "block";
+
+    document.querySelector(".upload").style.display = "none";
+
+    x = canvas.width / 2;
+    y = canvas.height / 2;
+
+    escala =
+      Math.max(
+        canvas.width / imagem.width,
+        canvas.height / imagem.height
+      );
+
+    zoom.value = 1;
+
+    desenhar();
+
+    URL.revokeObjectURL(url);
+  };
+
+  imagem.src = url;
+
+});
+
+zoom.addEventListener("input", function() {
+
+  if (!imagem.src) return;
+
+  const escalaBase =
+    Math.max(
+      canvas.width / imagem.width,
+      canvas.height / imagem.height
+    );
+
+  escala = escalaBase * Number(zoom.value);
+
+  desenhar();
+
+});
+
+mais.addEventListener("click", function() {
+
+  zoom.value =
+    Math.min(3, Number(zoom.value) + 0.1);
+
+  zoom.dispatchEvent(new Event("input"));
+
+});
+
+menos.addEventListener("click", function() {
+
+  zoom.value =
+    Math.max(0.2, Number(zoom.value) - 0.1);
+
+  zoom.dispatchEvent(new Event("input"));
+
+});
+
+canvas.addEventListener("pointerdown", function(event) {
+
+  arrastando = true;
+
+  canvas.setPointerCapture(event.pointerId);
+
+  ultimoX = event.clientX;
+  ultimoY = event.clientY;
+
+});
+
+canvas.addEventListener("pointermove", function(event) {
+
+  if (!arrastando) return;
+
+  const rect = canvas.getBoundingClientRect();
+
+  const movimentoX =
+    (event.clientX - ultimoX) *
+    (canvas.width / rect.width);
+
+  const movimentoY =
+    (event.clientY - ultimoY) *
+    (canvas.height / rect.height);
+
+  x += movimentoX;
+  y += movimentoY;
+
+  ultimoX = event.clientX;
+  ultimoY = event.clientY;
+
+  desenhar();
+
+});
+
+canvas.addEventListener("pointerup", function() {
+  arrastando = false;
+});
+
+canvas.addEventListener("pointercancel", function() {
+  arrastando = false;
+});
+
+trocar.addEventListener("click", function() {
+
+  input.value = "";
+
+  input.click();
+
+});
+
+salvar.addEventListener("click", function() {
+
+  const imagemFinal =
+    canvas.toDataURL("image/png");
+
+  const link =
+    document.createElement("a");
+
+  link.download =
+    "professora-shirley-10222.png";
+
+  link.href = imagemFinal;
+
+  link.click();
+
+});
+
+</script>
+
+</body>
+</html>
